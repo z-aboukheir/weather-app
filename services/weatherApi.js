@@ -3,7 +3,7 @@ export default async function weatherApi(latitude, longitude) {
     if (!latitude || !longitude) {
       throw new Error("Latitude and longitude are required");
     }
-    const api = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&hourly=temperature_2m,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto&past_days=5`;
+    const api = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&hourly=temperature_2m,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto`;
     const response = await fetch(api);
     if (!response.ok) {
       throw new Error("Unable to fetch weather data");

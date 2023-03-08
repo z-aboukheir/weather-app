@@ -13,7 +13,7 @@ export default async function getCity(latitude, longitude) {
       throw new Error("geocode data not available");
     }
     const ville =
-      data.results[0].components.city || data.results[0].components.town;
+    data.results[0].components.village  ||  data.results[0].components.municipality  || data.results[0].components.city || data.results[0].components.town
     return ville;
   } catch (error) {
     throw error;

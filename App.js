@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
-import { SafeAreaView, StyleSheet, Text, View } from "react-native";
+import {
+  ScrollView,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  FlatList,
+} from "react-native";
 import weatherCodeImg from "./functions/weatherCodeImg";
 import weatherApi from "./services/weatherApi";
 import locationApi from "./services/locationApi";
@@ -14,31 +22,27 @@ export default function App() {
 
   useEffect(() => {
     setLoading(true);
-    // (async () => {
-    try {
-      locationApi().then((location) => {
-         getCity(
-          location.coords.latitude,
-          location.coords.longitude
-        ).then((city)=>setCity(city))
+
+    locationApi()
+      .then((location) => {
+        getCity(location.coords.latitude, location.coords.longitude).then(
+          (city) => setCity(city)
+        );
         weatherApi(location.coords.latitude, location.coords.longitude).then(
           (data) => {
             setWeatherData(data);
             setLoading(false);
           }
         );
+      })
+      .catch((error) => {
+        console.log(error.message);
+        setLoading(false);
+        if (error.message == "Permission to access location was denied")
+          setErrorLocation(true);
+        if (!errorLocation) setError404(true);
       });
-    } catch (error) {
-      console.log(error.message);
-      setLoading(false);
-      if (error.message == "Permission to access location was denied")
-        setErrorLocation(true);
-      if (!errorLocation) setError404(true);
-    }
-    // })();
   }, []);
-
-  console.log(weatherData);
 
   if (loading)
     return (
@@ -62,40 +66,127 @@ export default function App() {
     );
 
   return (
-    <SafeAreaView style={styles.SafeAreaView}>
-      <Text style={styles.texte}>{city}</Text>
-      <Text style={styles.texte}>
-        Température actuelle: {weatherData.current_weather.data[0]}°C
-      </Text>
-      <Text style={styles.texte}>
-        {/*{weatherCodeImg(weatherData.daily.weathercode[1])}°C */}
-      </Text>
-      {/* <Text style={styles.texte}>
-            Température maximale: {weatherData.daily[0].max_temperature}°C
+    <View style={styles.SafeAreaView}>
+      <ScrollView>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-around",
+            alignItems: "center",
+          }}
+        >
+          <View style={{ flexDirection: "column" }}>
+            <Text style={styles.title}> {city}</Text>
+            {weatherData.current_weather &&
+              weatherData.current_weather.weathercode && (
+                <Image
+                  source={{
+                    uri: weatherCodeImg(
+                      weatherData.current_weather.weathercode
+                    ),
+                  }}
+                  style={{ width: 100, height: 100 }}
+                />
+              )}
+          </View>
+          <Text style={{ fontSize: 40 }}>
+            {weatherData.current_weather &&
+              weatherData.current_weather.temperature}
+            °C
           </Text>
-          <Text style={styles.texte}>
-            Température minimale: {weatherData.daily[0].min_temperature}°C
-          </Text>       */}
-    </SafeAreaView>
+        </View>
+        <Text style={[styles.text, { textAlign: "center", paddingTop: 10 }]}>
+          Meteo sur 7 jours:
+        </Text>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Text style={styles.text}>Aujoud'hui</Text>
+
+          {weatherData.current_weather &&
+            weatherData.daily.temperature_2m_max && (
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Image
+                  source={{
+                    uri: weatherCodeImg(
+                      weatherData.current_weather.weathercode
+                    ),
+                  }}
+                  style={styles.image}
+                />
+                <Text>
+                  {" "}
+                  {weatherData.daily.temperature_2m_max[0]}°C /{" "}
+                  {weatherData.daily.temperature_2m_min[0]}°C
+                </Text>
+              </View>
+            )}
+        </View>
+        <View style={{flexDirection: "row"}}>
+        {weatherData && weatherData.hourly && (
+          <FlatList
+            data={weatherData.hourly.time}
+            renderItem={({ item, index }) => (
+              <>
+                <View style={{ flexDirection: "row"}}>
+                  <Text style={{fontWeight:"bold"}}> {new Date(item).toLocaleDateString()} {""}</Text>
+                 
+                  <Text>
+                    {new Date(item).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </Text>
+                </View>
+              </>
+            )}
+            style={styles.containerlistContent}
+          />
+        )}
+
+{weatherData && weatherData.hourly && (
+          <FlatList
+            data={weatherData.hourly.temperature_2m}
+            renderItem={({ item, index }) => (
+              <>
+               <Text>{item}°C</Text>
+              </>
+            )}
+            style={styles.containerlistContent}
+          />
+        )}
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   SafeAreaView: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    // justifyContent: "center",
+    // alignItems: "center",
     backgroundColor: "#fff",
-    // paddingTop: 40,
-    // paddingLeft: 10,
+    // alignItems: "center",
+    paddingTop: 40,
+    paddingLeft: 20,
+    paddingRight: 20,
   },
-  titre: {
+
+  title: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 16,
   },
-  texte: {
-    fontSize: 18,
-    marginBottom: 8,
+  text: {
+    fontSize: 20,
+  },
+  image: {
+    width: 70,
+    height: 70,
   },
 });
